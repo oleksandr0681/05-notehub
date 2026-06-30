@@ -33,6 +33,7 @@ function App() {
   const handleSearch = useDebouncedCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setSearch(event.target.value);
+      setCurrentPage(1);
     },
     1000
   );
