@@ -77,7 +77,6 @@ function App() {
           <NoteForm
             onSuccess={closeModal}
             onCancel={closeModal}
-            // isPending={postNoteMutation.isPending}
           />
         </Modal>
       )}
