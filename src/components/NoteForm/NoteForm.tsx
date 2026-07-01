@@ -1,16 +1,18 @@
 import { ErrorMessage, Field, Form, Formik, type FormikHelpers } from 'formik';
 import css from './NoteForm.module.css';
-import type { NoteFormValues } from '../../types/note';
+import type { CreateNote } from '../../types/note';
 import { useId } from 'react';
 import * as Yup from 'yup';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { createNote } from '../../services/noteService';
+import toast from 'react-hot-toast';
 
 interface NoteFormProps {
   onCancel: () => void;
-  onProcessSubmit: (note: NoteFormValues) => void;
-  isPending: boolean;
+  onSuccess: () => void;
 }
 
-const initialValues: NoteFormValues = {
+const initialValues: CreateNote = {
   title: '',
   content: '',
   tag: 'Todo',
@@ -20,6 +22,10 @@ const NoteFormSchema = Yup.object().shape({
   title: Yup.string()
     .min(3, 'Title too short')
     .max(50, 'Title too long')
+    .matches(
+      /^[^\s].*[^\s]$/,
+      'Spaces at the beginning and end are not allowed'
+    )
     .required('Title is required'),
   content: Yup.string().max(500, 'Content too long'),
   tag: Yup.string()
@@ -27,22 +33,32 @@ const NoteFormSchema = Yup.object().shape({
     .required('Select tag'),
 });
 
-export default function NoteForm({
-  onCancel,
-  onProcessSubmit,
-  isPending,
-}: NoteFormProps) {
+export default function NoteForm({ onCancel, onSuccess }: NoteFormProps) {
   const fieldId = useId();
+
+  const queryClient = useQueryClient();
+
+  const postNoteMutation = useMutation({
+    mutationFn: createNote,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['note'] });
+      onSuccess();
+    },
+    onError: error => {
+      toast.error(error.message);
+    },
+  });
 
   const handleCancel = () => {
     onCancel();
   };
 
   const handleSubmit = (
-    values: NoteFormValues,
-    actions: FormikHelpers<NoteFormValues>
+    values: CreateNote,
+    actions: FormikHelpers<CreateNote>
   ) => {
-    onProcessSubmit(values);
+    values.content = values.content.trim();
+    postNoteMutation.mutate(values);
     actions.resetForm();
   };
 
@@ -104,7 +120,7 @@ export default function NoteForm({
           <button
             type="submit"
             className={css.submitButton}
-            disabled={isPending}
+            disabled={postNoteMutation.isPending}
           >
             Create note
           </button>

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Note, NoteFormValues } from '../types/note';
+import type { Note, CreateNote } from '../types/note';
 
 const notesToken = `Bearer ${import.meta.env.VITE_NOTEHUB_TOKEN}`;
 
@@ -40,7 +40,7 @@ export async function fetchNotes({
   return response.data;
 }
 
-export async function createNote(note: NoteFormValues): Promise<Note> {
+export async function createNote(note: CreateNote): Promise<Note> {
   const parameters = {
     headers: {
       Authorization: notesToken,

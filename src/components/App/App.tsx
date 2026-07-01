@@ -1,18 +1,12 @@
 import { useEffect, useState } from 'react';
-import {
-  useQuery,
-  keepPreviousData,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import css from './App.module.css';
-import { fetchNotes, createNote, deleteNote } from '../../services/noteService';
+import { fetchNotes } from '../../services/noteService';
 import NoteList from '../NoteList/NoteList';
 import Pagination from '../Pagination/Pagination';
 import SearchBox from '../SearchBox/SearchBox';
 import Modal from '../Modal/Modal';
 import NoteForm from '../NoteForm/NoteForm';
-import type { NoteFormValues } from '../../types/note';
 import { useDebouncedCallback } from 'use-debounce';
 import Loader from '../Loader/Loader';
 import toast, { Toaster } from 'react-hot-toast';
@@ -38,32 +32,6 @@ function App() {
     1000
   );
 
-  const queryClient = useQueryClient();
-
-  const postNoteMutation = useMutation({
-    mutationFn: createNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['note'] });
-    },
-  });
-
-  const deleteNoteMutation = useMutation({
-    mutationFn: deleteNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['note'] });
-    },
-  });
-
-  const handlePostNote = (note: NoteFormValues) => {
-    setIsModalOpen(false);
-    postNoteMutation.mutate(note);
-  };
-
-  const handleDeleteNote = (id: string) => {
-    setIsModalOpen(false);
-    deleteNoteMutation.mutate(id);
-  };
-
   const { data, isLoading, isSuccess, isError, error } = useQuery({
     queryKey: ['note', search, currentPage],
     queryFn: () => fetchNotes({ search: search, page: currentPage }),
@@ -84,24 +52,6 @@ function App() {
     }
   }, [isError, error]);
 
-  useEffect(() => {
-    if (
-      postNoteMutation.isError === true &&
-      postNoteMutation.error !== undefined
-    ) {
-      toast.error(postNoteMutation.error.message);
-    }
-  }, [postNoteMutation.isError, postNoteMutation.error]);
-
-  useEffect(() => {
-    if (
-      deleteNoteMutation.isError === true &&
-      deleteNoteMutation.isError !== undefined
-    ) {
-      toast.error(deleteNoteMutation.error.message);
-    }
-  }, [deleteNoteMutation.isError, deleteNoteMutation.error]);
-
   return (
     <div className={css.app}>
       <header className={css.toolbar}>
@@ -117,21 +67,17 @@ function App() {
           Create note +
         </button>
       </header>
-      {(isLoading ||
-        postNoteMutation.isPending ||
-        deleteNoteMutation.isPending) && <Loader />}
+      {isLoading && <Loader />}
       {data !== null &&
         data !== undefined &&
         data.notes !== undefined &&
-        data.notes.length > 0 && (
-          <NoteList notes={data.notes} onDelete={handleDeleteNote} />
-        )}
+        data.notes.length > 0 && <NoteList notes={data.notes} />}
       {isModalOpen === true && (
         <Modal onClose={closeModal}>
           <NoteForm
-            onProcessSubmit={handlePostNote}
+            onSuccess={closeModal}
             onCancel={closeModal}
-            isPending={postNoteMutation.isPending}
+            // isPending={postNoteMutation.isPending}
           />
         </Modal>
       )}

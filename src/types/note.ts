@@ -9,7 +9,7 @@ export interface Note {
 
 export type NoteTag = 'Todo' | 'Work' | 'Personal' | 'Meeting' | 'Shopping';
 
-export interface NoteFormValues {
+export interface CreateNote {
   title: string;
   content: string;
   tag: NoteTag;
